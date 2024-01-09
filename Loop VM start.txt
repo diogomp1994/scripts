@@ -1,0 +1,31 @@
+# Connect to Azure
+Connect-AzAccount
+
+# List all subscriptions
+Get-AzSubscription | Format-Table Name, Id
+
+# Ask for the subscription to use
+$subscriptionId = Read-Host -Prompt "Enter the Subscription ID you want to use"
+Select-AzSubscription -SubscriptionId $subscriptionId
+
+# Ask for Resource Group
+$resourceGroup = Read-Host -Prompt "Enter the Resource Group name"
+
+# Ask for VM Name
+$vmName = Read-Host -Prompt "Enter the VM Name"
+
+# Function to start the VM
+function Start-VMAndWait {
+    $vm = Start-AzVM -Name $vmName -ResourceGroupName $resourceGroup
+    $vmState = (Get-AzVM -ResourceGroupName $resourceGroup -Name $vmName -Status).Statuses[1].DisplayStatus
+    Write-Host "Current VM Status: $vmState"
+    return $vmState
+}
+
+# Loop until VM is in "VM running" state
+do {
+    $currentState = Start-VMAndWait
+    Start-Sleep -Seconds 30
+} while ($currentState -ne "VM running")
+
+Write-Host "VM is now running."
